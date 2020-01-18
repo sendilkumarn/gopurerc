@@ -3,31 +3,30 @@ package concurrent
 import (
 	"fmt"
 	"gopurerc/pkg/common"
-	"gopurerc/pkg/object"
 )
 
-var roots []*object.Object
+var roots []*Object
 
-var cycleBuffer [][]*object.Object
+var cycleBuffer [][]*Object
 
-func Increment(o *object.Object) {
+func Increment(o *Object) {
 	fmt.Println("incrementing", o.String())
 	o.Rc = o.Rc + 1
 	scanBlack(o)
 }
 
-func Decrement(o *object.Object) {
+func Decrement(o *Object) {
 	fmt.Println("decrementing", o.String())
 	o.Rc = o.Rc - 1
 	if o.Rc == 0 {
-		releaseAll(o)
-	} else if !object.IsAcyclic(o) {
+		release(o)
+	} else if !IsAcyclic(o) {
 		possibleRoot(o)
 	}
 }
 
-func releaseAll(o *object.Object) {
-	fmt.Println("releasing", o.String())
+func release(o *Object) {
+	fmt.Println("release", o.String())
 	for _, child := range o.Children {
 		Decrement(child)
 	}
@@ -37,7 +36,7 @@ func releaseAll(o *object.Object) {
 	}
 }
 
-func possibleRoot(o *object.Object) {
+func possibleRoot(o *Object) {
 	fmt.Println("possible root")
 	scanBlack(o)
 	o.Color = common.Color.PURPLE
@@ -64,9 +63,8 @@ func findCycles() {
 
 func markRoots() {
 	fmt.Println("markRoots")
-	totalLen := len(roots)
 	sn := 0
-	for si := 0; si < totalLen; si++ {
+	for si := 0; si < len(roots); si++ {
 		s := roots[si]
 		if s.Color == common.Color.PURPLE && s.Rc > 0 {
 			//fmt.Println(len(roots))
@@ -79,9 +77,7 @@ func markRoots() {
 				free(s)
 			}
 		}
-		totalLen = len(roots)
 	}
-
 	roots = roots[:sn]
 }
 
@@ -104,7 +100,7 @@ func collectRoots() {
 	for si < sk {
 		s := roots[si]
 		if s.Color == common.Color.WHITE {
-			var currentCycle []*object.Object
+			var currentCycle []*Object
 			gc := collectWhite(s, currentCycle)
 			cycleBuffer = append(cycleBuffer, gc)
 		} else {
@@ -112,10 +108,10 @@ func collectRoots() {
 		}
 		si++
 	}
-	roots = []*object.Object{}
+	roots = []*Object{}
 }
 
-func scanBlack(o *object.Object) {
+func scanBlack(o *Object) {
 	fmt.Println("Scan black")
 	if o.Color != common.Color.BLACK {
 		o.Color = common.Color.BLACK
@@ -125,7 +121,7 @@ func scanBlack(o *object.Object) {
 	}
 }
 
-func markGray(o *object.Object) {
+func markGray(o *Object) {
 	fmt.Println("marking gray", o.String())
 	if o.Color != common.Color.GRAY {
 		o.Color = common.Color.GRAY
@@ -140,7 +136,7 @@ func markGray(o *object.Object) {
 	}
 }
 
-func scan(o *object.Object) {
+func scan(o *Object) {
 	fmt.Println("scanning")
 	if o.Color == common.Color.GRAY {
 		if o.Crc > 0 {
@@ -154,7 +150,7 @@ func scan(o *object.Object) {
 	}
 }
 
-func collectWhite(o *object.Object, cc []*object.Object) []*object.Object {
+func collectWhite(o *Object, cc []*Object) []*Object {
 	fmt.Println("collecting white")
 	if o.Color == common.Color.WHITE {
 		o.Color = common.Color.ORANGE
@@ -167,9 +163,9 @@ func collectWhite(o *object.Object, cc []*object.Object) []*object.Object {
 	return cc
 }
 
-func free(o *object.Object) {
+func free(o *Object) {
 	fmt.Println("freeing count", o.String())
-	object.Count = object.Count - 1
+	Count = Count - 1
 	o.Freed = true
 }
 
@@ -184,10 +180,10 @@ func freeCycles() {
 		}
 	}
 
-	cycleBuffer = [][]*object.Object{}
+	cycleBuffer = [][]*Object{}
 }
 
-func sigmaDeltaTest(o []*object.Object) bool {
+func sigmaDeltaTest(o []*Object) bool {
 	externRC := 0
 	for _, n := range o {
 		if n.Color != common.Color.ORANGE {
@@ -198,7 +194,7 @@ func sigmaDeltaTest(o []*object.Object) bool {
 	return externRC == 0
 }
 
-func freeCycle(o []*object.Object) {
+func freeCycle(o []*Object) {
 	fmt.Println("free cycle", o)
 
 	for _, n := range o {
@@ -218,7 +214,7 @@ func freeCycle(o []*object.Object) {
 
 }
 
-func cyclicDecrement(o *object.Object) {
+func cyclicDecrement(o *Object) {
 	fmt.Println("cyclic Decrement")
 	if o.Color != common.Color.RED {
 		if o.Color == common.Color.ORANGE {
@@ -230,7 +226,7 @@ func cyclicDecrement(o *object.Object) {
 	}
 }
 
-func refurbish(o []*object.Object) {
+func refurbish(o []*Object) {
 	fmt.Println("refurbish")
 	first := true
 	ni := 0
@@ -270,4 +266,111 @@ func sigmaPreparation() {
 			n.Color = common.Color.ORANGE
 		}
 	}
+}
+
+type Object struct {
+	Name      string
+	Rc        int
+	Crc       int
+	Color     string
+	Buffered  bool
+	Children  []*Object
+	Freed     bool
+	isAcyclic bool
+}
+
+var Count int
+
+func New(name string) Object {
+	o := Object{
+		Name:     name,
+		Rc:       0,
+		Crc:      0,
+		Color:    common.Color.BLACK,
+		Buffered: false,
+		Children: []*Object{},
+		Freed:    false,
+	}
+	Count++
+	fmt.Println("Creating new object", o.String())
+	return o
+}
+
+func (o *Object) String() string {
+	return fmt.Sprintf("name: %s, Rc: %d, Crc: %d, Color: %s, Children: %d, Count: %d", o.Name, o.Rc, o.Crc, o.Color, len(o.Children), Count)
+}
+
+func (o *Object) PrintChild() {
+	for _, child := range o.Children {
+		fmt.Println(child.String())
+	}
+
+}
+
+func IsAcyclic(o *Object) bool {
+	return !o.cyclesTo(o, make(map[*Object]bool))
+}
+
+func (o *Object) cyclesTo(other *Object, except map[*Object]bool) bool {
+	if except[o] == true {
+		return false
+	}
+
+	except[o] = true
+	for _, child := range o.Children {
+		if child == other || child.cyclesTo(other, except) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (o *Object) Add(s *Object) {
+	Increment(s)
+	o.Children = append(o.Children, s)
+}
+
+func (o *Object) remove(s Object) {
+	index := -1
+	for i, child := range o.Children {
+		if child.Name == s.Name {
+			index = i
+			break
+		}
+	}
+	if index != -1 {
+		o.Children = append(o.Children[:index], o.Children[index+1:]...)
+		Decrement(&s)
+	}
+}
+
+func CheckAlive(o *Object, except map[interface{}]bool) bool {
+	if except[o] == true {
+		return false
+	}
+	except[o] = true
+	if o.Freed || Count == 0 {
+		panic("should be alive")
+	}
+
+	for _, c := range o.Children {
+		CheckAlive(c, except)
+	}
+	return true
+}
+
+func CheckDead(o *Object, except map[interface{}]bool) bool {
+	if except[o] == true {
+		return false
+	}
+	except[o] = true
+	if !o.Freed {
+		panic("should be dead")
+	}
+
+	for _, c := range o.Children {
+		CheckDead(c, except)
+	}
+	return true
 }

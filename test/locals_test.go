@@ -1,18 +1,18 @@
 package test
 
 import (
-	"gopurerc/pkg/object"
+	"gopurerc/pkg/concurrent"
 	"testing"
 )
 
-func customRetain(o *object.Object) {
+func customRetain(o *concurrent.Object) {
 
 	//b := retain(&o)
 
 }
 
 func TestLocals(*testing.T) {
-	o := object.New("1")
+	o := concurrent.New("1")
 
 	customRetain(&o)
 	someFunction(&o)
@@ -20,4 +20,3 @@ func TestLocals(*testing.T) {
 	collect()
 	check()
 }
-

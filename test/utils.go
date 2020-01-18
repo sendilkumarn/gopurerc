@@ -3,16 +3,16 @@ package test
 import (
 	"fmt"
 	"gopurerc/pkg/concurrent"
-	"gopurerc/pkg/object"
 )
 
-func retain(o *object.Object) {
+func retain(o *concurrent.Object) {
 	if o.Name != "" {
 		concurrent.Increment(o)
 	}
 }
 
-func release(o *object.Object) {
+func release(o *concurrent.Object) {
+	fmt.Println("releasing by decrementing")
 	if o.Name != "" {
 		concurrent.Decrement(o)
 	}
@@ -24,8 +24,8 @@ func collect() {
 }
 
 func check() {
-	fmt.Println("count is ", object.Count)
-	if object.Count != 0 {
+	fmt.Println("count is ", concurrent.Count)
+	if concurrent.Count != 0 {
 		panic("error ")
 	}
 }

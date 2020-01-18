@@ -1,7 +1,7 @@
 package test
 
 import (
-	"gopurerc/pkg/object"
+	"gopurerc/pkg/concurrent"
 	"testing"
 )
 
@@ -14,7 +14,7 @@ func TestCycle(*testing.T) {
 }
 
 func createCycle() {
-	o := object.New("self")
+	o := concurrent.New("self")
 	o.Add(&o)
 
 	retain(&o)
@@ -31,13 +31,13 @@ func TestCycle1(*testing.T) {
 }
 
 func createCycle1() {
-	o := object.New("self")
+	o := concurrent.New("self")
 	o.Add(&o)
 
 	doRoutine(&o)
 }
 
-func doRoutine(o *object.Object) {
+func doRoutine(o *concurrent.Object) {
 	retain(o)
 	someFunction(o)
 	release(o)
@@ -49,12 +49,11 @@ func TestCycle2(*testing.T) {
 	createCycle2()
 	collect()
 	check()
-
 }
 
 func createCycle2() {
-	o := object.New("array")
-	t := object.New("element")
+	o := concurrent.New("array")
+	t := concurrent.New("element")
 	t.Add(&o)
 	o.Add(&t)
 	doRoutine(&o)
@@ -70,11 +69,11 @@ func TestCycle3(*testing.T) {
 }
 
 func createCycle3() {
-	o := object.New("level1")
-	l2 := object.New("level2")
+	o := concurrent.New("level1")
+	l2 := concurrent.New("level2")
 	o.Add(&l2)
-	l3 := object.New("level3")
-	l4 := object.New("level4")
+	l3 := concurrent.New("level3")
+	l4 := concurrent.New("level4")
 	o.Add(&l3)
 	o.Add(&l4)
 	o.Add(&o)
@@ -91,12 +90,12 @@ func TestCycle4(*testing.T) {
 }
 
 func createCycle4() {
-	outer := object.New("outer")
-	o := object.New("level1")
-	l2 := object.New("level2")
+	outer := concurrent.New("outer")
+	o := concurrent.New("level1")
+	l2 := concurrent.New("level2")
 	o.Add(&l2)
-	l3 := object.New("level3")
-	l4 := object.New("level4")
+	l3 := concurrent.New("level3")
+	l4 := concurrent.New("level4")
 	o.Add(&l3)
 	o.Add(&l4)
 	o.Add(&o)
@@ -114,10 +113,10 @@ func TestCycle5(*testing.T) {
 }
 
 func createCycle5() {
-	s := object.New("level0")
-	t := object.New("level1")
-	u := object.New("level2")
-	v := object.New("level3")
+	s := concurrent.New("level0")
+	t := concurrent.New("level1")
+	u := concurrent.New("level2")
+	v := concurrent.New("level3")
 
 	v.Add(&t)
 	v.Add(&u)
@@ -141,12 +140,12 @@ func TestCycle6(*testing.T) {
 }
 
 func createCycle6() {
-	o := object.New("outer")
-	s := object.New("level1")
-	l2 := object.New("level2")
+	o := concurrent.New("outer")
+	s := concurrent.New("level1")
+	l2 := concurrent.New("level2")
 	s.Add(&l2)
 	s.Add(&s)
-	inner := object.New("inner")
+	inner := concurrent.New("inner")
 	s.Add(&inner)
 	o.Add(&s)
 
@@ -163,32 +162,30 @@ func TestCycle7(*testing.T) {
 }
 
 func createCycle7() {
-	var s1, s2, t1, t2 object.Object
+	var s1, s2, t1, t2 concurrent.Object
 
-	cycle1 := object.New("a:outer")
-	s1 = object.New("a:level1")
-	t1 = object.New("a:level2")
+	cycle1 := concurrent.New("a:outer")
+	s1 = concurrent.New("a:level1")
+	t1 = concurrent.New("a:level2")
 	t1.Add(&s1)
-	inner1 := object.New("a:inner")
+	inner1 := concurrent.New("a:inner")
 	t1.Add(&inner1)
 	s1.Add(&t1)
 	cycle1.Add(&s1)
 
-
-	cycle2 := object.New("b:outer")
-	s2 = object.New("b:level1")
-	t2 = object.New("b:level2")
+	cycle2 := concurrent.New("b:outer")
+	s2 = concurrent.New("b:level1")
+	t2 = concurrent.New("b:level2")
 	t2.Add(&s2)
-	inner2 := object.New("b:inner")
+	inner2 := concurrent.New("b:inner")
 	t2.Add(&inner2)
 	s2.Add(&t2)
 	cycle2.Add(&s2)
 
-
-	cycle3 := object.New("c:level1")
-	l2 := object.New("c:level2")
-	l3 := object.New("c:level3")
-	l4 := object.New("c:level4")
+	cycle3 := concurrent.New("c:level1")
+	l2 := concurrent.New("c:level2")
+	l3 := concurrent.New("c:level3")
+	l4 := concurrent.New("c:level4")
 
 	l4.Add(&cycle3)
 	l3.Add(&l4)
@@ -205,11 +202,11 @@ func createCycle7() {
 
 	retain(&cycle1)
 
-	object.CheckAlive(&cycle1, map[interface{}]bool{})
-	object.CheckAlive(&cycle2, map[interface{}]bool{})
-	object.CheckAlive(&cycle3, map[interface{}]bool{})
-	object.CheckAlive(&t1, map[interface{}]bool{})
-	object.CheckAlive(&t2, map[interface{}]bool{})
+	concurrent.CheckAlive(&cycle1, map[interface{}]bool{})
+	concurrent.CheckAlive(&cycle2, map[interface{}]bool{})
+	concurrent.CheckAlive(&cycle3, map[interface{}]bool{})
+	concurrent.CheckAlive(&t1, map[interface{}]bool{})
+	concurrent.CheckAlive(&t2, map[interface{}]bool{})
 
 	collect()
 	collect()
@@ -233,11 +230,11 @@ func createCycle7() {
 	collect()
 	collect()
 
-	object.CheckAlive(&cycle1, map[interface{}]bool{})
-	object.CheckAlive(&cycle2, map[interface{}]bool{})
-	object.CheckAlive(&cycle3, map[interface{}]bool{})
-	object.CheckAlive(&t1, map[interface{}]bool{})
-	object.CheckAlive(&t2, map[interface{}]bool{})
+	concurrent.CheckAlive(&cycle1, map[interface{}]bool{})
+	concurrent.CheckAlive(&cycle2, map[interface{}]bool{})
+	concurrent.CheckAlive(&cycle3, map[interface{}]bool{})
+	concurrent.CheckAlive(&t1, map[interface{}]bool{})
+	concurrent.CheckAlive(&t2, map[interface{}]bool{})
 
 	release(&cycle1)
 }

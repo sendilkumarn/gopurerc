@@ -1,7 +1,7 @@
 package test
 
 import (
-	"gopurerc/pkg/object"
+	"gopurerc/pkg/concurrent"
 	"testing"
 )
 
@@ -12,12 +12,12 @@ func TestArray(*testing.T) {
 }
 
 func createArray() {
-	o := object.New("array")
-	e1 := object.New("element1")
+	o := concurrent.New("array")
+	e1 := concurrent.New("element1")
 	o.Add(&e1)
-	e2 := object.New("element2")
+	e2 := concurrent.New("element2")
 	o.Add(&e2)
-	e3 := object.New("element3")
+	e3 := concurrent.New("element3")
 	o.Add(&e3)
 
 	retain(&o)
@@ -25,7 +25,7 @@ func createArray() {
 	release(&o)
 }
 
-func someFunction(o *object.Object) {
+func someFunction(o *concurrent.Object) {
 	defer release(o)
 	retain(o)
 }

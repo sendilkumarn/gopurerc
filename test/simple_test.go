@@ -1,13 +1,13 @@
 package test
 
 import (
-	object2 "gopurerc/pkg/object"
+	"gopurerc/pkg/concurrent"
 	"testing"
 )
 
 func TestSimple(*testing.T) {
-	o := object2.New("1")
-	object := object2.New("2")
+	o := concurrent.New("1")
+	object := concurrent.New("2")
 	o.Add(&object)
 
 	retain(&o)
